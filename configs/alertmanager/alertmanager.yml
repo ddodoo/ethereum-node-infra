@@ -1,134 +1,135 @@
+---
 global:
-  # Update with your actual SMTP server
-  smtp_smarthost: 'smtp.gmail.com:587'
-  smtp_from: 'ethereum.nodealerts@gmail.com'
-  smtp_auth_username: 'ethereum.nodealerts@gmail.com'
-  smtp_auth_password: 'izxc qxet ngwi lhmc'  
+  smtp_smarthost: smtp.gmail.com:587
+  smtp_from: ethereum.nodealerts@gmail.com
+  smtp_auth_username: ethereum.nodealerts@gmail.com
+  smtp_auth_password: izxc qxet ngwi lhmc
   smtp_require_tls: true
   resolve_timeout: 5m
-
 route:
-  group_by: ['alertname', 'cluster', 'service']
+  group_by:
+    - alertname
+    - cluster
+    - service
   group_wait: 30s
   group_interval: 5m
   repeat_interval: 4h
-  receiver: 'default'
+  receiver: default
   routes:
     - match:
         severity: critical
-      receiver: 'critical-alerts'
+      receiver: critical-alerts
       group_wait: 10s
       repeat_interval: 1h
-      continue: true  
-    
+      continue: true
     - match:
         service: ethereum
-      receiver: 'ethereum-alerts'
+      receiver: ethereum-alerts
       routes:
         - match:
             alertname: EthereumNodeDown
-          receiver: 'ethereum-critical'
+          receiver: ethereum-critical
           repeat_interval: 30m
-    
     - match:
         service: system
-      receiver: 'system-alerts'
-    
+      receiver: system-alerts
     - match:
         service: monitoring
-      receiver: 'monitoring-alerts'
-      group_interval: 10m  
-
+      receiver: monitoring-alerts
+      group_interval: 10m
 receivers:
-  - name: 'default'
+  - name: default
     email_configs:
-      - to: 'alerts@yourdomain.com'
-        subject: '[ETHEREUM-NODE] {{ .GroupLabels.alertname }}'
-        body: |
+      - to: alerts@yourdomain.com
+        subject: "[ETHEREUM-NODE] {{ .GroupLabels.alertname }}"
+        body: >
           Alert Summary: {{ len .Alerts }} alert(s)
-          
-          {{ range .Alerts }}
-          🔔 {{ .Annotations.summary }}
-          📋 {{ .Annotations.description }}
-          🏷️ Severity: {{ .Labels.severity }}
-          📅 Started: {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}
-          {{ if gt (len .Labels.instance) 0 }}📍 Instance: {{ .Labels.instance }}{{ end }}
-          
-          {{ end }}
 
-  - name: 'critical-alerts'
+
+          {{ range .Alerts }}
+
+          🔔 {{ .Annotations.summary }}
+
+          📋 {{ .Annotations.description }}
+
+          🏷️ Severity: {{ .Labels.severity }}
+
+          📅 Started: {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}
+
+          {{ if gt (len .Labels.instance) 0 }}📍 Instance: {{ .Labels.instance }}{{ end }}
+
+
+          {{ end }}
+  - name: critical-alerts
     email_configs:
-      - to: 'devops-team@yourdomain.com, on-call@yourdomain.com'
-        subject: '[🚨 CRITICAL] Ethereum Node - {{ .GroupLabels.alertname }}'
+      - to: devops-team@yourdomain.com, on-call@yourdomain.com
+        subject: "[🚨 CRITICAL] Ethereum Node - {{ .GroupLabels.alertname }}"
         body: |
           🚨🚨🚨 CRITICAL ALERT 🚨🚨🚨
-          
+
           {{ range .Alerts }}
           Alert: {{ .Annotations.summary }}
           Description: {{ .Annotations.description }}
           Instance: {{ .Labels.instance }}
           Severity: {{ .Labels.severity }}
           Started: {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}
-          
+
           {{ if .Annotations.runbook_url }}
           📖 Runbook: {{ .Annotations.runbook_url }}
           {{ end }}
-          
+
           {{ if .GeneratorURL }}
           🔗 Alert Source: {{ .GeneratorURL }}
           {{ end }}
           {{ end }}
         headers:
-          Priority: 'high'
-          X-Priority: '1'
-
-  - name: 'ethereum-alerts'
+          Priority: high
+          X-Priority: "1"
+  - name: ethereum-alerts
     email_configs:
-      - to: 'blockchain-team@yourdomain.com'
-        subject: '[⛓️ ETHEREUM] {{ .GroupLabels.alertname }}'
+      - to: blockchain-team@yourdomain.com
+        subject: "[⛓️ ETHEREUM] {{ .GroupLabels.alertname }}"
         body: |
           Ethereum Node Alert Details:
-          
+
           {{ range .Alerts }}
           🔔 Alert: {{ .Annotations.summary }}
           📋 Description: {{ .Annotations.description }}
           📍 Instance: {{ .Labels.instance }}
           🏷️ Severity: {{ .Labels.severity }}
           📅 Started: {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}
-          
+
           {{ if .Annotations.runbook_url }}
           📖 Runbook: {{ .Annotations.runbook_url }}
           {{ end }}
           {{ end }}
-
-  - name: 'ethereum-critical'
+  - name: ethereum-critical
     email_configs:
-      - to: 'blockchain-team@yourdomain.com, devops-team@yourdomain.com'
-        subject: '[🚨 ETHEREUM DOWN] Node Offline - Immediate Action Required'
+      - to: blockchain-team@yourdomain.com, devops-team@yourdomain.com
+        subject: "[🚨 ETHEREUM DOWN] Node Offline - Immediate Action Required"
         body: |
           🚨 ETHEREUM NODE DOWN 🚨
-          
+
           {{ range .Alerts }}
           Your Ethereum node has stopped responding!
-          
+
           Instance: {{ .Labels.instance }}
           Started: {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}
           Duration: {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}
-          
+
           Immediate actions:
           1. Check node logs: docker logs geth-node
           2. Check system resources
           3. Verify network connectivity
           4. Check disk space
           {{ end }}
-
-  - name: 'system-alerts'
+  - name: system-alerts
     email_configs:
-      - to: 'sysadmin@yourdomain.com'
-        subject: '[🖥️ SYSTEM] {{ .GroupLabels.alertname }}'
+      - to: sysadmin@yourdomain.com
+        subject: "[🖥️ SYSTEM] {{ .GroupLabels.alertname }}"
         body: |
           System Alert Details:
-          
+
           {{ range .Alerts }}
           🔔 Alert: {{ .Annotations.summary }}
           📋 Description: {{ .Annotations.description }}
@@ -136,14 +137,13 @@ receivers:
           🏷️ Severity: {{ .Labels.severity }}
           📅 Started: {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}
           {{ end }}
-
-  - name: 'monitoring-alerts'
+  - name: monitoring-alerts
     email_configs:
-      - to: 'monitoring-team@yourdomain.com'
-        subject: '[📊 MONITORING] {{ .GroupLabels.alertname }}'
+      - to: monitoring-team@yourdomain.com
+        subject: "[📊 MONITORING] {{ .GroupLabels.alertname }}"
         body: |
           Monitoring System Alert:
-          
+
           {{ range .Alerts }}
           🔔 Alert: {{ .Annotations.summary }}
           📋 Description: {{ .Annotations.description }}
@@ -151,26 +151,27 @@ receivers:
           🏷️ Severity: {{ .Labels.severity }}
           📅 Started: {{ .StartsAt.Format "2006-01-02 15:04:05 UTC" }}
           {{ end }}
-
 inhibit_rules:
   - source_match:
-      severity: 'critical'
+      severity: critical
     target_match:
-      severity: 'warning'
-    equal: ['alertname', 'cluster', 'service', 'instance']
-  
-  # Inhibit node alerts when the entire service is down
+      severity: warning
+    equal:
+      - alertname
+      - cluster
+      - service
+      - instance
   - source_match:
-      alertname: 'EthereumNodeDown'
+      alertname: EthereumNodeDown
     target_match_re:
-      alertname: 'High.*|Low.*'
-    equal: ['instance']
-
-# Mute rules for maintenance windows 
+      alertname: High.*|Low.*
+    equal:
+      - instance
 mute_time_intervals:
-  - name: 'maintenance-window'
+  - name: maintenance-window
     time_intervals:
       - times:
-          - start_time: '02:00'
-            end_time: '04:00'
-        weekdays: ['sunday']
+          - start_time: 02:00
+            end_time: 04:00
+        weekdays:
+          - sunday
