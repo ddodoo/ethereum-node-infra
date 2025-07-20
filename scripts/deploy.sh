@@ -11,21 +11,13 @@ mkdir -p backups
 sudo chown -R 472:472 data/grafana  # Grafana UID
 sudo chown -R 65534:65534 data/prometheus  # Nobody UID
 
-# Check if .env exists
-if [ ! -f .env ]; then
-    echo "📋 Copying .env.example to .env"
-    cp .env.example .env
-    echo "⚠️  Please edit .env file with your preferences"
-    read -p "Press Enter to continue..."
-fi
-
 # Pull latest images
 echo "📥 Pulling Docker images..."
-docker-compose pull
+docker compose pull
 
 # Deploy stack
 echo "🏗️  Starting services..."
-docker-compose up -d
+docker compose up -d
 
 # Wait for services to be ready
 echo "⏳ Waiting for services to start..."
@@ -33,7 +25,7 @@ sleep 30
 
 # Run health check
 echo "🔍 Running health checks..."
-./scripts/health-check.sh
+./health-check.sh
 
 echo "✅ Deployment complete!"
 echo ""
