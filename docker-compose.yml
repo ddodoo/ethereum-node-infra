@@ -80,11 +80,12 @@ services:
     ports:
       - "9093:9093"
     volumes:
-      - ./configs/alertmanager:/etc/alertmanager
       - alertmanager-data:/alertmanager
+      - ./configs/alertmanager:/etc/alertmanager
     command:
       - '--config.file=/etc/alertmanager/alertmanager.yml'
       - '--storage.path=/alertmanager'
+      - '--web.external-url=http://localhost:9093'
 
   node-exporter:
     image: prom/node-exporter:v1.6.0
