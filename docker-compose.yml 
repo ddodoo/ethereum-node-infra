@@ -1,0 +1,110 @@
+version: '3.8'
+
+services:
+  geth:
+    image: ethereum/client-go:v1.13.4
+    container_name: geth-node
+    restart: unless-stopped
+    ports:
+      - "8545:8545"    # HTTP RPC
+      - "8546:8546"    # WebSocket RPC
+      - "30303:30303"  # P2P
+    volumes:
+      - ${DATA_DIR}/geth:/root/.ethereum
+      - ./configs/geth:/configs
+    command: >
+      --${ETHEREUM_NETWORK}
+      --syncmode ${GETH_SYNCMODE}
+      --http
+      --http.addr 0.0.0.0
+      --http.port 8545
+      --http.corsdomain "${GETH_HTTP_CORS_DOMAIN}"
+      --http.vhosts "${GETH_HTTP_VHOSTS}"
+      --http.api eth,net,web3,personal
+      --ws
+      --ws.addr 0.0.0.0
+      --ws.port 8546
+      --ws.api eth,net,web3
+      --cache ${GETH_CACHE}
+      --maxpeers ${GETH_MAX_PEERS}
+      --metrics
+      --metrics.addr 0.0.0.0
+      --metrics.port 6060
+    healthcheck:
+      test: ["CMD-SHELL", "geth attach --exec 'eth.syncing' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+        max-file: "5"
+
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./configs/prometheus:/etc/prometheus
+      - ${DATA_DIR}/prometheus:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=${PROMETHEUS_RETENTION}'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+    depends_on:
+      - geth
+
+  grafana:
+    image: grafana/grafana:10.1.0
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ${DATA_DIR}/grafana:/var/lib/grafana
+      - ./configs/grafana:/etc/grafana/provisioning
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    depends_on:
+      - prometheus
+
+  alertmanager:
+    image: prom/alertmanager:v0.25.0
+    container_name: alertmanager
+    restart: unless-stopped
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./configs/alertmanager:/etc/alertmanager
+      - ${DATA_DIR}/alertmanager:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+
+  node-exporter:
+    image: prom/node-exporter:v1.6.0
+    container_name: node-exporter
+    restart: unless-stopped
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+
+volumes:
+  geth-data:
+  prometheus-data:
+  grafana-data:
+  alertmanager-data:

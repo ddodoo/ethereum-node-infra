@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: geth
+  namespace: ethereum
+spec:
+  serviceName: geth
+  replicas: 1
+  selector:
+    matchLabels:
+      app: geth
+  template:
+    metadata:
+      labels:
+        app: geth
+    spec:
+      containers:
+      - name: geth
+        image: ethereum/client-go:v1.13.4
+        ports:
+        - containerPort: 8545
+          name: http-rpc
+        - containerPort: 8546
+          name: ws-rpc
+        - containerPort: 30303
+          name: p2p
+        - containerPort: 6060
+          name: metrics
+        args:
+          - --sepolia
+          - --syncmode=snap
+          - --http
+          - --http.addr=0.0.0.0
+          - --http.port=8545
+          - --http.api=eth,net,web3
+          - --ws
+          - --ws.addr=0.0.0.0
+          - --ws.port=8546
+          - --cache=4096
+          - --maxpeers=50
+          - --metrics
+          - --metrics.addr=0.0.0.0
+          - --metrics.port=6060
+        resources:
+          requests:
+            memory: "8Gi"
+            cpu: "2"
+          limits:
+            memory: "16Gi"
+            cpu: "4"
+        volumeMounts:
+        - name: blockchain-data
+          mountPath: /root/.ethereum
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 6060
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        readinessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - "geth attach --exec 'eth.syncing == false'"
+          initialDelaySeconds: 120
+          periodSeconds: 60
+  volumeClaimTemplates:
+  - metadata:
+      name: blockchain-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: "ssd"
+      resources:
+        requests:
+          storage: 1Ti
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: geth
+  namespace: ethereum
+spec:
+  selector:
+    app: geth
+  ports:
+  - name: http-rpc
+    port: 8545
+    targetPort: 8545
+  - name: ws-rpc
+    port: 8546
+    targetPort: 8546
+  - name: metrics
+    port: 6060
+    targetPort: 6060
+  type: ClusterIP

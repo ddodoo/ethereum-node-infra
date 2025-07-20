@@ -1,0 +1,38 @@
+groups:
+  - name: ethereum_node
+    rules:
+      - alert: EthereumNodeDown
+        expr: up{job="geth"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Ethereum node is down"
+          description: "Geth node has been down for more than 1 minute"
+
+      - alert: EthereumNodeNotSyncing
+        expr: increase(geth_blockchain_head_block[5m]) == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Ethereum node not syncing"
+          description: "No new blocks received in 5 minutes"
+
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.8
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is above 80%"
+
+      - alert: DiskSpaceRunningOut
+        expr: (node_filesystem_free_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) < 0.1
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Disk space running out"
+          description: "Less than 10% disk space remaining"
