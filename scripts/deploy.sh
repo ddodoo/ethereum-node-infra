@@ -3,19 +3,21 @@ set -e
 
 echo "🚀 Deploying Ethereum Node Infrastructure..."
 
-# Create data directories
-mkdir -p data/{geth,prometheus,grafana,alertmanager}
+# Stop any running containers and clean up
+echo "🧹 Cleaning up existing deployment..."
+docker compose down -v
+
+# Remove old data directories 
+sudo rm -rf data/
+
+# Create config directories (these are bind-mounted and contain our configuration files)
+echo "📁 Creating configuration directories..."
+mkdir -p configs/{geth,prometheus,grafana,alertmanager}
 mkdir -p backups
 
-# Set permissions
-sudo chown -R 472:472 data/grafana        # Grafana UID:GID
-sudo chown -R 65534:65534 data/prometheus # Prometheus UID:GID  
-sudo chown -R 65534:65534 data/alertmanager # AlertManager UID:GID
-
-# Set directories permissions 
-sudo chmod -R 755 data/grafana
-sudo chmod -R 755 data/prometheus
-sudo chmod -R 755 data/alertmanager
+# Ensure config directories have proper permissions
+sudo chown -R $(id -u):$(id -g) configs/
+sudo chmod -R 755 configs/
 
 # Pull latest images
 echo "📥 Pulling Docker images..."
@@ -29,8 +31,22 @@ docker compose up -d
 echo "⏳ Waiting for services to start..."
 sleep 30
 
+# Check container status
+echo "📊 Container status:"
+docker compose ps
+
+# Show logs for troubleshooting if needed
+echo "📋 Recent logs (last 5 lines per service):"
+echo "--- Grafana ---"
+docker logs grafana 2>&1 | tail -5
+echo "--- Prometheus ---"
+docker logs prometheus 2>&1 | tail -5
+echo "--- AlertManager ---"
+docker logs alertmanager 2>&1 | tail -5
+
 # Run health check
 echo "🔍 Running health checks..."
+chmod +x ./health-check.sh
 ./health-check.sh
 
 echo "✅ Deployment complete!"
@@ -43,3 +59,11 @@ echo "   Geth RPC:     http://localhost:8545"
 echo ""
 echo "📊 Test the node:"
 echo "   ./scripts/test-node.sh"
+echo ""
+echo "💾 Data is stored in Docker volumes:"
+echo "   - grafana-data"
+echo "   - prometheus-data"  
+echo "   - geth-data"
+echo "   - alertmanager-data"
+echo ""
+echo "🔧 To backup data: docker run --rm -v grafana-data:/data alpine tar czf /backup.tar.gz -C /data ."

@@ -10,7 +10,7 @@ services:
       - "8546:8546"    # WebSocket RPC
       - "30303:30303"  # P2P
     volumes:
-      - ${DATA_DIR}/geth:/root/.ethereum
+      - geth-data:/root/.ethereum
       - ./configs/geth:/configs
     command: >
       --${ETHEREUM_NETWORK}
@@ -50,7 +50,7 @@ services:
       - "9090:9090"
     volumes:
       - ./configs/prometheus:/etc/prometheus
-      - ${DATA_DIR}/prometheus:/prometheus
+      - prometheus-data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -67,7 +67,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ${DATA_DIR}/grafana:/var/lib/grafana
+      - grafana-data:/var/lib/grafana
       - ./configs/grafana:/etc/grafana/provisioning
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
@@ -83,7 +83,7 @@ services:
       - "9093:9093"
     volumes:
       - ./configs/alertmanager:/etc/alertmanager
-      - ${DATA_DIR}/alertmanager:/alertmanager
+      - alertmanager-data:/alertmanager
     command:
       - '--config.file=/etc/alertmanager/alertmanager.yml'
       - '--storage.path=/alertmanager'
