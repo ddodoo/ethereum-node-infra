@@ -7,9 +7,15 @@ echo "🚀 Deploying Ethereum Node Infrastructure..."
 mkdir -p data/{geth,prometheus,grafana,alertmanager}
 mkdir -p backups
 
-# Set proper permissions
-sudo chown -R 472:472 data/grafana  # Grafana UID
-sudo chown -R 65534:65534 data/prometheus  # Nobody UID
+# Set permissions
+sudo chown -R 472:472 data/grafana        # Grafana UID:GID
+sudo chown -R 65534:65534 data/prometheus # Prometheus UID:GID  
+sudo chown -R 65534:65534 data/alertmanager # AlertManager UID:GID
+
+# Set directories permissions 
+sudo chmod -R 755 data/grafana
+sudo chmod -R 755 data/prometheus
+sudo chmod -R 755 data/alertmanager
 
 # Pull latest images
 echo "📥 Pulling Docker images..."
