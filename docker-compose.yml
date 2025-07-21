@@ -10,7 +10,7 @@ services:
       - "8551:8551"
     volumes:
       - ./configs/geth:/configs
-      - ./data/jwtsecret:/var/lib/goethereum/jwtsecret:ro
+      - ./data/jwtsecret:/root/jwtsecret:ro
       - geth-data:/root/.ethereum
     command: >
       --sepolia
@@ -33,7 +33,7 @@ services:
       --authrpc.addr 0.0.0.0
       --authrpc.port 8551
       --authrpc.vhosts=localhost
-      --authrpc.jwtsecret  /var/lib/goethereum/jwtsecret
+      --authrpc.jwtsecret  /root/jwtsecret 
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:8545 || exit 1"]
       interval: 30s
@@ -58,12 +58,12 @@ services:
       - "5052:5052"
     volumes:
       - lighthouse-data:/root/.lighthouse
-      - ./data/jwtsecret:/var/lib/goethereum/jwtsecret:ro
+      - ./data/jwtsecret:/root/jwtsecret:ro
     command: >
       lighthouse bn
       --network sepolia
       --execution-endpoint http://geth-node:8551
-      --execution-jwt /var/lib/goethereum/jwtsecret
+      --execution-jwt /root/jwtsecret
       --checkpoint-sync-url https://sepolia.beaconstate.info
       --http
       --metrics
@@ -97,7 +97,7 @@ services:
       - grafana-data:/var/lib/grafana
       - ./configs/grafana:/etc/grafana/provisioning
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
       - GF_INSTALL_PLUGINS=grafana-piechart-panel
     depends_on:
       - prometheus

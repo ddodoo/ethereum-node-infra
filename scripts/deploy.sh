@@ -14,14 +14,15 @@ sudo rm -rf data/
 echo "📁 Creating configuration directories..."
 mkdir -p configs/{geth,prometheus,grafana,alertmanager}
 mkdir -p backups
+mkdir -p data
 
 # Create JWT secret (required by Geth & Lighthouse)
 echo "🔐 Generating JWT secret..."
-mkdir -p ./data 
-# Ensure current user owns the data directory before creating jwtsecret
-sudo chown -R $(id -u):$(id -g) ./data # Added this line
 openssl rand -hex 32 | tr -d "\n" > ./data/jwtsecret
+
+# Ensure the JWT secret is a file and has proper permissions
 chmod 644 ./data/jwtsecret
+ls -la ./data/jwtsecret  # Verify it's a file
 
 # Ensure config directories have proper permissions
 sudo chown -R $(id -u):$(id -g) configs/
@@ -72,6 +73,7 @@ echo "💾 Data is stored in Docker volumes:"
 echo "   - grafana-data"
 echo "   - prometheus-data"  
 echo "   - geth-data"
+echo "   - lighthouse-data"
 echo "   - alertmanager-data"
 echo ""
 echo "🔧 To backup data: docker run --rm -v grafana-data:/data alpine tar czf /backup.tar.gz -C /data ."
