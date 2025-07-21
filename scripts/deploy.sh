@@ -18,6 +18,8 @@ mkdir -p backups
 # Create JWT secret (required by Geth & Lighthouse)
 echo "🔐 Generating JWT secret..."
 mkdir -p ./data 
+# Ensure current user owns the data directory before creating jwtsecret
+sudo chown -R $(id -u):$(id -g) ./data # Added this line
 openssl rand -hex 32 | tr -d "\n" > ./data/jwtsecret
 chmod 644 ./data/jwtsecret
 
