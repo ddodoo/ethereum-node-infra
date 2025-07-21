@@ -16,10 +16,10 @@ mkdir -p configs/{geth,prometheus,grafana,alertmanager}
 mkdir -p backups
 
 # Create JWT secret (required by Geth & Lighthouse)
-echo "🔐 Generating JWT secret for authrpc..."
-mkdir -p ./data/sepolia/geth
-openssl rand -hex 32 | tr -d "\n" > ./data/sepolia/geth/jwtsecret
-chmod 644 ./data/sepolia/geth/jwtsecret
+echo "🔐 Generating JWT secret..."
+mkdir -p ./data 
+openssl rand -hex 32 | tr -d "\n" > ./data/jwtsecret
+chmod 644 ./data/jwtsecret
 
 # Ensure config directories have proper permissions
 sudo chown -R $(id -u):$(id -g) configs/
