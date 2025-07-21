@@ -18,11 +18,10 @@ mkdir -p data
 
 # Create JWT secret (required by Geth & Lighthouse)
 echo "🔐 Generating JWT secret..."
-openssl rand -hex 32 | tr -d "\n" > ./data/jwtsecret
-
-# Ensure the JWT secret is a file and has proper permissions
-chmod 644 ./data/jwtsecret
-ls -la ./data/jwtsecret  # Verify it's a file
+mkdir -p ./data/jwt
+openssl rand -hex 32 | tr -d "\n" > ./data/jwt/secret
+chmod 644 ./data/jwt/secret
+ls -la ./data/jwt/secret
 
 # Ensure config directories have proper permissions
 sudo chown -R $(id -u):$(id -g) configs/
