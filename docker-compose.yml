@@ -9,9 +9,9 @@ services:
       - "30303:30303"
       - "8551:8551"
     volumes:
-      - geth-data:/root/.ethereum
       - ./configs/geth:/configs
-      - ./data/jwtsecret:/jwtsecret:ro 
+      - geth-data:/root/.ethereum
+      - ./data/jwtsecret:/root/.ethereum/sepolia/geth/jwtsecret:ro
     command: >
       --sepolia
       --syncmode snap
@@ -33,7 +33,7 @@ services:
       --authrpc.addr 0.0.0.0
       --authrpc.port 8551
       --authrpc.vhosts=localhost
-      --authrpc.jwtsecret /jwtsecret
+      --authrpc.jwtsecret /root/.ethereum/sepolia/geth/jwtsecret
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:8545 || exit 1"]
       interval: 30s
