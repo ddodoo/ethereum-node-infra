@@ -32,7 +32,7 @@ services:
       --metrics.port 6060
       --authrpc.addr 0.0.0.0
       --authrpc.port 8551
-      --authrpc.vhosts=localhost
+      --authrpc.vhosts=*
       --authrpc.jwtsecret /root/jwt/secret 
     healthcheck:
       test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost:8545 || exit 1"]
