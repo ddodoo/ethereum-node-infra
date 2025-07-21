@@ -10,7 +10,7 @@ services:
       - "8551:8551"
     volumes:
       - ./configs/geth:/configs
-      - ./data/jwtsecret:/jwtsecret:ro
+      - ./data/jwtsecret:/var/lib/goethereum/jwtsecret:ro
       - geth-data:/root/.ethereum
     command: >
       --sepolia
@@ -33,7 +33,7 @@ services:
       --authrpc.addr 0.0.0.0
       --authrpc.port 8551
       --authrpc.vhosts=localhost
-      --authrpc.jwtsecret /jwtsecret
+      --authrpc.jwtsecret  /var/lib/goethereum/jwtsecret
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:8545 || exit 1"]
       interval: 30s
@@ -58,12 +58,12 @@ services:
       - "5052:5052"
     volumes:
       - lighthouse-data:/root/.lighthouse
-      - ./data/jwtsecret:/jwtsecret:ro
+      - ./data/jwtsecret:/var/lib/goethereum/jwtsecret:ro
     command: >
       lighthouse bn
       --network sepolia
       --execution-endpoint http://geth-node:8551
-      --execution-jwt /jwtsecret
+      --execution-jwt /var/lib/goethereum/jwtsecret
       --checkpoint-sync-url https://sepolia.beaconstate.info
       --http
       --metrics
