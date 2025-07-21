@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   geth:
     image: ethereum/client-go:v1.13.4
@@ -13,7 +11,7 @@ services:
     volumes:
       - geth-data:/root/.ethereum
       - ./configs/geth:/configs
-      - ./data/sepolia/geth/jwtsecret:/root/.ethereum/sepolia/geth/jwtsecret:ro
+      - ./data/jwtsecret:/jwtsecret:ro 
     command: >
       --sepolia
       --syncmode snap
@@ -34,14 +32,14 @@ services:
       --metrics.port 6060
       --authrpc.addr 0.0.0.0
       --authrpc.port 8551
-      --authrpc.vhosts=*
-      --authrpc.jwtsecret /root/.ethereum/sepolia/geth/jwtsecret
+      --authrpc.vhosts=localhost
+      --authrpc.jwtsecret /jwtsecret
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:8545 || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 120s
     logging:
       driver: json-file
       options:
@@ -60,7 +58,7 @@ services:
       - "5052:5052"
     volumes:
       - lighthouse-data:/root/.lighthouse
-      - ./data/sepolia/geth/jwtsecret:/jwtsecret:ro
+      - ./data/jwtsecret:/jwtsecret:ro
     command: >
       lighthouse bn
       --network sepolia
