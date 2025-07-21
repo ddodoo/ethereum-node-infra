@@ -1,6 +1,6 @@
 services:
   geth:
-    image: ethereum/client-go:v1.14.12
+    image: ethereum/client-go:latest
     container_name: geth-node
     restart: unless-stopped
     ports:
