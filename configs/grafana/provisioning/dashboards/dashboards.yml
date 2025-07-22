@@ -6,27 +6,7 @@ providers:
     folder: ''
     type: file
     disableDeletion: false
-    updateIntervalSeconds: 10
-    allowUiUpdates: true
-    options:
-      path: /var/lib/grafana/dashboards
-
-  - name: 'ethereum'
-    orgId: 1
-    folder: 'Ethereum'
-    type: file
-    disableDeletion: false
-    updateIntervalSeconds: 10
-    allowUiUpdates: true
-    options:
-      path: /var/lib/grafana/dashboards
-
-  - name: 'system'
-    orgId: 1
-    folder: 'System'
-    type: file
-    disableDeletion: false
-    updateIntervalSeconds: 10
+    updateIntervalSeconds: 30
     allowUiUpdates: true
     options:
       path: /var/lib/grafana/dashboards

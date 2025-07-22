@@ -20,7 +20,7 @@ services:
       --http.port 8545
       --http.corsdomain "*"
       --http.vhosts "*"
-      --http.api eth,net,web3,personal
+      --http.api eth,net,web3
       --ws
       --ws.addr 0.0.0.0
       --ws.port 8546
