@@ -1,38 +1,171 @@
 groups:
-  - name: ethereum_node
+  - name: ethereum_node_alerts
     rules:
+      # Critical Alerts
       - alert: EthereumNodeDown
         expr: up{job="geth"} == 0
         for: 1m
         labels:
           severity: critical
+          service: ethereum
         annotations:
-          summary: "Ethereum node is down"
-          description: "Geth node has been down for more than 1 minute"
+          summary: "Ethereum Geth node is down"
+          description: "Geth node {{ $labels.instance }} has been down for more than 1 minute"
+          runbook_url: "https://your-wiki.com/runbooks/ethereum-node-down"
+
+      - alert: LighthouseBeaconDown
+        expr: up{job="lighthouse"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: ethereum
+        annotations:
+          summary: "Lighthouse beacon node is down"
+          description: "Lighthouse beacon node {{ $labels.instance }} has been down for more than 1 minute"
+          runbook_url: "https://your-wiki.com/runbooks/lighthouse-down"
 
       - alert: EthereumNodeNotSyncing
         expr: increase(geth_blockchain_head_block[5m]) == 0
         for: 5m
         labels:
-          severity: warning
+          severity: critical
+          service: ethereum
         annotations:
           summary: "Ethereum node not syncing"
-          description: "No new blocks received in 5 minutes"
+          description: "No new blocks received by {{ $labels.instance }} in 5 minutes. Node may be out of sync."
+          runbook_url: "https://your-wiki.com/runbooks/node-not-syncing"
 
-      - alert: HighMemoryUsage
-        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.8
-        for: 2m
+      - alert: EthereumSyncLagging
+        expr: (time() - geth_blockchain_head_header_timestamp) > 300
+        for: 5m
         labels:
-          severity: warning
+          severity: critical
+          service: ethereum
         annotations:
-          summary: "High memory usage"
-          description: "Memory usage is above 80%"
+          summary: "Ethereum node sync lagging behind"
+          description: "Node {{ $labels.instance }} is more than 5 minutes behind the network"
 
       - alert: DiskSpaceRunningOut
         expr: (node_filesystem_free_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) < 0.1
         for: 1m
         labels:
           severity: critical
+          service: system
         annotations:
-          summary: "Disk space running out"
-          description: "Less than 10% disk space remaining"
+          summary: "Disk space critically low"
+          description: "Less than 10% disk space remaining on {{ $labels.instance }}"
+          runbook_url: "https://your-wiki.com/runbooks/disk-space-low"
+
+      # Warning Alerts
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.8
+        for: 2m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is above 80% on {{ $labels.instance }}"
+          runbook_url: "https://your-wiki.com/runbooks/high-memory-usage"
+
+      - alert: HighCPUUsage
+        expr: 100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is above 80% on {{ $labels.instance }} for more than 5 minutes"
+
+      - alert: EthereumLowPeerCount
+        expr: geth_p2p_peers < 5
+        for: 3m
+        labels:
+          severity: warning
+          service: ethereum
+        annotations:
+          summary: "Ethereum node has low peer count"
+          description: "Node {{ $labels.instance }} has only {{ $value }} peers connected"
+
+      - alert: EthereumHighPeerDisconnections
+        expr: rate(geth_p2p_peer_disconnections_total[5m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+          service: ethereum
+        annotations:
+          summary: "High peer disconnection rate"
+          description: "Node {{ $labels.instance }} is experiencing {{ $value }} peer disconnections per second"
+
+      - alert: LighthouseNotSynced
+        expr: lighthouse_beacon_sync_distance > 10
+        for: 5m
+        labels:
+          severity: warning
+          service: ethereum
+        annotations:
+          summary: "Lighthouse beacon chain out of sync"
+          description: "Beacon node {{ $labels.instance }} is {{ $value }} slots behind"
+
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_free_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) < 0.2
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "Disk space running low"
+          description: "Less than 20% disk space remaining on {{ $labels.instance }}"
+
+      - alert: HighNetworkLatency
+        expr: avg(rate(node_network_receive_bytes_total[5m])) > 100000000  # 100MB/s
+        for: 5m
+        labels:
+          severity: warning
+          service: system
+        annotations:
+          summary: "High network utilization"
+          description: "Network receive rate is above 100MB/s on {{ $labels.instance }}"
+
+  - name: monitoring_system_alerts
+    rules:
+      - alert: PrometheusDown
+        expr: up{job="prometheus"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: monitoring
+        annotations:
+          summary: "Prometheus is down"
+          description: "Prometheus has been down for more than 1 minute"
+
+      - alert: AlertmanagerDown
+        expr: up{job="alertmanager"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: monitoring
+        annotations:
+          summary: "Alertmanager is down"
+          description: "Alertmanager has been down for more than 1 minute"
+
+      - alert: GrafanaDown
+        expr: up{job="grafana"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          service: monitoring
+        annotations:
+          summary: "Grafana is down"
+          description: "Grafana has been down for more than 2 minutes"
+
+      - alert: NodeExporterDown
+        expr: up{job="node-exporter"} == 0
+        for: 1m
+        labels:
+          severity: warning
+          service: monitoring
+        annotations:
+          summary: "Node Exporter is down"
+          description: "Node Exporter has been down for more than 1 minute"
