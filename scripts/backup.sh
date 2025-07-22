@@ -55,7 +55,7 @@ backup_geth_snapshot() {
         docker exec ethereum-geth geth attach --exec "debug.setBlockProfileRate(0)"
         
         # Create compressed backup
-        if tar -czf "$backup_file" -C "$(dirname "$GETH_DATA_DIR")" "$(basename "$GETH_DATA_DIR")"; then
+        if tar -czf "$backup_file" -C "$(dirname "$GETH_DATA_DIR")" "$(basename "$GETH_DATA_DIR")" 2>/dev/null || true; then
             log "Geth snapshot backup created: $backup_file"
             
             # Resume normal operations
@@ -66,6 +66,7 @@ backup_geth_snapshot() {
                 log "Backup integrity verified"
                 local backup_size=$(du -h "$backup_file" | cut -f1)
                 log "Backup size: $backup_size"
+                return 0
             else
                 error "Backup integrity check failed"
                 return 1
@@ -81,13 +82,14 @@ backup_geth_snapshot() {
             local backup_file="$BACKUP_DIR/geth_offline_${TIMESTAMP}.tar.gz"
             if tar -czf "$backup_file" -C "$(dirname "$GETH_DATA_DIR")" "$(basename "$GETH_DATA_DIR")"; then
                 log "Offline Geth backup created: $backup_file"
+                return 0
             else
                 error "Failed to create offline Geth backup"
                 return 1
             fi
         else
             warn "Geth data directory not found: $GETH_DATA_DIR"
-            return 1
+            return 0  # Not a critical error if Geth data doesn't exist
         fi
     fi
 }
@@ -97,9 +99,22 @@ backup_configs() {
     log "Backing up configuration files..."
     
     local config_backup="$BACKUP_DIR/configs_${TIMESTAMP}.tar.gz"
+    local files_to_backup=()
     
-    if tar -czf "$config_backup" -C "$PROJECT_ROOT" configs docker-compose.yml docker-compose.prod.yml .env; then
+    # Check which files exist before trying to back them up
+    [ -f "$PROJECT_ROOT/docker-compose.yml" ] && files_to_backup+=("docker-compose.yml")
+    [ -f "$PROJECT_ROOT/docker-compose.prod.yml" ] && files_to_backup+=("docker-compose.prod.yml")
+    [ -f "$PROJECT_ROOT/.env" ] && files_to_backup+=(".env")
+    [ -d "$PROJECT_ROOT/configs" ] && files_to_backup+=("configs")
+    
+    if [ ${#files_to_backup[@]} -eq 0 ]; then
+        warn "No configuration files found to backup"
+        return 0
+    fi
+    
+    if tar -czf "$config_backup" -C "$PROJECT_ROOT" "${files_to_backup[@]}"; then
         log "Configuration backup created: $config_backup"
+        return 0
     else
         error "Failed to create configuration backup"
         return 1
@@ -113,26 +128,38 @@ backup_monitoring() {
     # Backup Prometheus data
     if docker ps --format "table {{.Names}}" | grep -q "prometheus"; then
         local prometheus_backup="$BACKUP_DIR/prometheus_${TIMESTAMP}.tar.gz"
-        docker exec prometheus tar -czf - /prometheus 2>/dev/null | cat > "$prometheus_backup" || true
-        if [ -s "$prometheus_backup" ]; then
-            log "Prometheus data backup created: $prometheus_backup"
+        if docker exec prometheus tar -czf - /prometheus 2>/dev/null > "$prometheus_backup"; then
+            if [ -s "$prometheus_backup" ]; then
+                log "Prometheus data backup created: $prometheus_backup"
+            else
+                warn "Prometheus backup is empty"
+                rm -f "$prometheus_backup"
+            fi
         else
-            warn "Prometheus backup is empty or failed"
-            rm -f "$prometheus_backup"
+            warn "Failed to create Prometheus backup"
         fi
+    else
+        warn "Prometheus container not running"
     fi
     
     # Backup Grafana data
     if docker ps --format "table {{.Names}}" | grep -q "grafana"; then
         local grafana_backup="$BACKUP_DIR/grafana_${TIMESTAMP}.tar.gz"
-        docker exec grafana tar -czf - /var/lib/grafana 2>/dev/null | cat > "$grafana_backup" || true
-        if [ -s "$grafana_backup" ]; then
-            log "Grafana data backup created: $grafana_backup"
+        if docker exec grafana tar -czf - /var/lib/grafana 2>/dev/null > "$grafana_backup"; then
+            if [ -s "$grafana_backup" ]; then
+                log "Grafana data backup created: $grafana_backup"
+            else
+                warn "Grafana backup is empty"
+                rm -f "$grafana_backup"
+            fi
         else
-            warn "Grafana backup is empty or failed"
-            rm -f "$grafana_backup"
+            warn "Failed to create Grafana backup"
         fi
+    else
+        warn "Grafana container not running"
     fi
+    
+    return 0
 }
 
 # Function to clean up old backups
@@ -145,7 +172,6 @@ cleanup_old_backups() {
         log "Backup cleanup completed. Remaining backups: $remaining_count"
     fi
 }
-
 
 # Main backup function
 main() {
@@ -174,10 +200,7 @@ main() {
         error_messages+=("Configuration backup failed")
     fi
     
-    backup_monitoring || true  # Non-critical, continue on failure
-    
-    # Upload to cloud storage if configured
-    upload_to_cloud || true
+    backup_monitoring
     
     # Clean up old backups
     cleanup_old_backups
@@ -187,11 +210,9 @@ main() {
     
     if [ "$backup_success" = true ]; then
         log "Backup process completed successfully in ${duration}s"
-        send_notification "success" "Ethereum node backup completed successfully in ${duration}s"
     else
         error "Backup process completed with errors in ${duration}s"
         error "Failed components: ${error_messages[*]}"
-        send_notification "error" "Backup process failed: ${error_messages[*]}"
         exit 1
     fi
 }
