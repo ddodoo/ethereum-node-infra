@@ -1,9 +1,9 @@
 apiVersion: 1
 
 providers:
-  - name: 'default'
+  - name: 'ethereum-dashboards' 
     orgId: 1
-    folder: ''
+    folder: 'Ethereum'          
     type: file
     disableDeletion: false
     updateIntervalSeconds: 30
