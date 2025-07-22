@@ -89,13 +89,13 @@
       },
       "targets": [
         {
-          "expr": "ethereum_blockchain_head_block",
+          "expr": "chain_head_block{job=\"geth\"}",
           "interval": "",
           "legendFormat": "Current Block",
           "refId": "A"
         },
         {
-          "expr": "ethereum_blockchain_head_header",
+          "expr": "chain_head_header{job=\"geth\"}",
           "interval": "",
           "legendFormat": "Current Header",
           "refId": "B"
@@ -152,9 +152,9 @@
       "pluginVersion": "8.5.0",
       "targets": [
         {
-          "expr": "up{job=\"ethereum-node\"}",
+          "expr": "up{job=\"geth\"}",
           "interval": "",
-          "legendFormat": "Node Status",
+          "legendFormat": "Geth Node Status",
           "refId": "A"
         }
       ],
@@ -481,7 +481,7 @@
       },
       "targets": [
         {
-          "expr": "ethereum_p2p_peers",
+          "expr": "p2p_peers{job=\"geth\"}",
           "interval": "",
           "legendFormat": "Connected Peers",
           "refId": "A"
@@ -583,7 +583,8 @@
   "tags": [
     "ethereum",
     "blockchain",
-    "node"
+    "node",
+    "geth"
   ],
   "templating": {
     "list": []
@@ -596,5 +597,5 @@
   "timezone": "",
   "title": "Ethereum Node Dashboard",
   "uid": "ethereum-node",
-  "version": 1
+  "version": 2
 }
