@@ -40,7 +40,7 @@ module "storage" {
   source     = "./modules/storage"
   region     = var.region
   disk_count = var.node_count
-  disk_size  = 250
+  disk_size  = 150
 
 }
 

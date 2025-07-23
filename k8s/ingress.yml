@@ -1,0 +1,123 @@
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: ethereum-ingress
+#   namespace: ethereum
+#   annotations:
+#     kubernetes.io/ingress.class: "gce"
+#     kubernetes.io/ingress.global-static-ip-name: "ethereum-ip"
+#     networking.gke.io/managed-certificates: "ethereum-ssl-cert"
+#     kubernetes.io/ingress.allow-http: "false"
+# spec:
+#   rules:
+#   - host: grafana.your-domain.com
+#     http:
+#       paths:
+#       - path: /
+#         pathType: Prefix
+#         backend:
+#           service:
+#             name: grafana
+#             port:
+#               number: 3000
+#   - host: prometheus.your-domain.com
+#     http:
+#       paths:
+#       - path: /
+#         pathType: Prefix
+#         backend:
+#           service:
+#             name: prometheus
+#             port:
+#               number: 9090
+#   - host: alertmanager.your-domain.com
+#     http:
+#       paths:
+#       - path: /
+#         pathType: Prefix
+#         backend:
+#           service:
+#             name: alertmanager
+#             port:
+#               number: 9093
+#   - host: geth.your-domain.com
+#     http:
+#       paths:
+#       - path: /
+#         pathType: Prefix
+#         backend:
+#           service:
+#             name: geth
+#             port:
+#               number: 8545
+# ---
+# apiVersion: networking.gke.io/v1
+# kind: ManagedCertificate
+# metadata:
+#   name: ethereum-ssl-cert
+#   namespace: ethereum
+# spec:
+#   domains:
+#     - grafana.your-domain.com
+#     - prometheus.your-domain.com
+#     - alertmanager.your-domain.com
+#     - geth.your-domain.com
+# ---
+# # Alternative Ingress with basic authentication for sensitive endpoints
+# apiVersion: v1
+# kind: Secret
+# metadata:
+#   name: basic-auth
+#   namespace: ethereum
+# type: Opaque
+# data:
+#   auth: YWRtaW46JGFwcjEkSDY1dnVrRzEkR1FsZnRmQWlEeTJzZTdzRzNORnlMMQ== # admin:secret123
+# ---
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: ethereum-secure-ingress
+#   namespace: ethereum
+#   annotations:
+#     kubernetes.io/ingress.class: "gce"
+#     kubernetes.io/ingress.global-static-ip-name: "ethereum-secure-ip"
+#     networking.gke.io/managed-certificates: "ethereum-secure-ssl-cert"
+#     kubernetes.io/ingress.allow-http: "false"
+#     nginx.ingress.kubernetes.io/auth-type: basic
+#     nginx.ingress.kubernetes.io/auth-secret: basic-auth
+#     nginx.ingress.kubernetes.io/auth-realm: 'Authentication Required - Ethereum Node'
+# spec:
+#   rules:
+#   - host: secure.your-domain.com
+#     http:
+#       paths:
+#       - path: /grafana
+#         pathType: Prefix
+#         backend:
+#           service:
+#             name: grafana
+#             port:
+#               number: 3000
+#       - path: /prometheus
+#         pathType: Prefix
+#         backend:
+#           service:
+#             name: prometheus
+#             port:
+#               number: 9090
+#       - path: /alertmanager
+#         pathType: Prefix
+#         backend:
+#           service:
+#             name: alertmanager
+#             port:
+#               number: 9093
+# ---
+# apiVersion: networking.gke.io/v1
+# kind: ManagedCertificate
+# metadata:
+#   name: ethereum-secure-ssl-cert
+#   namespace: ethereum
+# spec:
+#   domains:
+#     - secure.your-domain.com

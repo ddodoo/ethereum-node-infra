@@ -5,7 +5,7 @@
 - Docker Compose 2.0+
 - 4+ CPU cores
 - 8GB+ RAM
-- 250 GB+ SSD storage
+- 500 GB SSD storage
 - Ports 8545, 8546, 30303, 8551
 
 ### Local Deployment

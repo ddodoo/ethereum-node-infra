@@ -1,0 +1,163 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: geth
+  namespace: ethereum
+  labels:
+    app: geth
+spec:
+  selector:
+    app: geth
+  ports:
+  - name: http-rpc
+    port: 8545
+    targetPort: 8545
+    protocol: TCP
+  - name: ws-rpc
+    port: 8546
+    targetPort: 8546
+    protocol: TCP
+  - name: p2p
+    port: 30303
+    targetPort: 30303
+    protocol: TCP
+  - name: auth-rpc
+    port: 8551
+    targetPort: 8551
+    protocol: TCP
+  - name: metrics
+    port: 6060
+    targetPort: 6060
+    protocol: TCP
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: geth-loadbalancer
+  namespace: ethereum
+  labels:
+    app: geth
+  annotations:
+    cloud.google.com/load-balancer-type: "External"
+spec:
+  selector:
+    app: geth
+  ports:
+  - name: http-rpc
+    port: 8545
+    targetPort: 8545
+    protocol: TCP
+  - name: ws-rpc
+    port: 8546
+    targetPort: 8546
+    protocol: TCP
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lighthouse
+  namespace: ethereum
+  labels:
+    app: lighthouse
+spec:
+  selector:
+    app: lighthouse
+  ports:
+  - name: p2p
+    port: 9000
+    targetPort: 9000
+    protocol: TCP
+  - name: http-api
+    port: 5052
+    targetPort: 5052
+    protocol: TCP
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: ethereum
+  labels:
+    app: prometheus
+spec:
+  selector:
+    app: prometheus
+  ports:
+  - name: web
+    port: 9090
+    targetPort: 9090
+    protocol: TCP
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: ethereum
+  labels:
+    app: grafana
+spec:
+  selector:
+    app: grafana
+  ports:
+  - name: web
+    port: 3000
+    targetPort: 3000
+    protocol: TCP
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-loadbalancer
+  namespace: ethereum
+  labels:
+    app: grafana
+  annotations:
+    cloud.google.com/load-balancer-type: "External"
+spec:
+  selector:
+    app: grafana
+  ports:
+  - name: web
+    port: 80
+    targetPort: 3000
+    protocol: TCP
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: alertmanager
+  namespace: ethereum
+  labels:
+    app: alertmanager
+spec:
+  selector:
+    app: alertmanager
+  ports:
+  - name: web
+    port: 9093
+    targetPort: 9093
+    protocol: TCP
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: node-exporter
+  namespace: ethereum
+  labels:
+    app: node-exporter
+spec:
+  selector:
+    app: node-exporter
+  ports:
+  - name: metrics
+    port: 9100
+    targetPort: 9100
+    protocol: TCP
+  type: ClusterIP
