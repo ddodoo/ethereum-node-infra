@@ -78,10 +78,15 @@ detect_geth_container() {
 check_geth_sync_status() {
     local container_name="$1"
     
-    # Check if Geth is still syncing
-    local sync_status=$(docker exec "$container_name" geth attach --exec "eth.syncing" 2>/dev/null || echo "null")
+    # Try IPC first
+    local sync_status=$(docker exec "$container_name" geth attach --exec "eth.syncing" 2>/dev/null || echo "")
     
-    if [ "$sync_status" != "false" ] && [ "$sync_status" != "null" ]; then
+    # If IPC fails, try HTTP RPC
+    if [ -z "$sync_status" ] || [[ "$sync_status" == *"Fatal"* ]]; then
+        sync_status=$(docker exec "$container_name" sh -c 'curl -s -X POST -H "Content-Type: application/json" --data "{\"jsonrpc\":\"2.0\",\"method\":\"eth_syncing\",\"params\":[],\"id\":1}" http://localhost:8545 2>/dev/null | grep -o "\"result\":[^,}]*" | cut -d: -f2' 2>/dev/null || echo "null")
+    fi
+    
+    if [ "$sync_status" != "false" ] && [ "$sync_status" != "null" ] && [[ "$sync_status" != *"false"* ]]; then
         warn "Geth is currently syncing. This may affect backup consistency."
         return 1
     else
@@ -93,8 +98,28 @@ check_geth_sync_status() {
 # Function to get Geth block number
 get_geth_block_number() {
     local container_name="$1"
-    local block_number=$(docker exec "$container_name" geth attach --exec "eth.blockNumber" 2>/dev/null || echo "0")
-    echo "$block_number"
+    
+    # Try different methods to get block number
+    local block_number=""
+    
+    # Method 1: Try IPC socket
+    block_number=$(docker exec "$container_name" geth attach --exec "eth.blockNumber" 2>/dev/null || echo "")
+    if [[ "$block_number" =~ ^[0-9]+$ ]]; then
+        echo "$block_number"
+        return 0
+    fi
+    
+    # Method 2: Try HTTP RPC if available
+    block_number=$(docker exec "$container_name" sh -c 'curl -s -X POST -H "Content-Type: application/json" --data "{\"jsonrpc\":\"2.0\",\"method\":\"eth_blockNumber\",\"params\":[],\"id\":1}" http://localhost:8545 2>/dev/null | grep -o "\"result\":\"[^\"]*\"" | cut -d\" -f4' 2>/dev/null || echo "")
+    if [[ "$block_number" =~ ^0x[0-9a-fA-F]+$ ]]; then
+        # Convert hex to decimal
+        echo $((block_number))
+        return 0
+    fi
+    
+    # Method 3: Use timestamp as fallback
+    echo "unknown_$(date +%s)"
+    return 0
 }
 
 # Function to detect Geth data directory in container
@@ -143,7 +168,9 @@ backup_geth_snapshot() {
         
         # Get current block number for backup metadata
         local current_block=$(get_geth_block_number "$container_name")
-        info "Current block number: $current_block"
+        # Clean the block number to remove any error messages or invalid characters
+        current_block=$(echo "$current_block" | sed 's/[^0-9a-zA-Z_]/_/g' | head -c 20)
+        info "Current block identifier: $current_block"
         
         # Check disk space (estimate 20GB for Geth data)
         if ! check_disk_space 25; then
