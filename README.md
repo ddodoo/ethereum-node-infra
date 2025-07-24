@@ -202,17 +202,15 @@ cp configs/grafana/dashboards/template.json configs/grafana/dashboards/my-dashbo
 docker compose restart grafana
 ```
 
-
-
 ⬆️ Vertical Scaling
 
 ```
-
 | Environment  | vCPU | Memory | Storage | Network   |
 |--------------|------|--------|---------|-----------|
 | Development  | 4    | 8GB    | 250GB   | 100Mbps   |
 | Staging      | 6    | 12GB   | 500GB   | 500Mbps   |
 | Production   | 8+   | 16GB+  | 1TB+    | 1Gbps+    |
+```
 
 ### Auto-scaling Configuration
 - Enabled for Production
@@ -223,13 +221,13 @@ docker compose restart grafana
 🔄 Auto-scaling Configuration:
 
 Manual Scaling: 
-```
+
 # Scale up to 2 replicas
+```
 kubectl scale statefulset geth --replicas=2 -n ethereum
 ```
 
 Vertical Pod Autoscaling
-
 ```
 # vpa.yml
 ---
@@ -283,7 +281,6 @@ spec:
 ---
 ```
 
-
 ## ⏱️ Recovery Time Objectives:
 
 RTO (Recovery Time): <15 minutes
@@ -305,39 +302,31 @@ ingress_rules:
     protocol: "tcp/udp"
 ```
 
-
 ## 🛠️ Troubleshooting Guide:
 
 
-```
 # Check sync status
-
+```
 curl -X POST -H "Content-Type: application/json" \
   --data '{"jsonrpc":"2.0","method":"eth_syncing","params":[],"id":1}' \
   http://localhost:8545
 ```
 
-
-```
 ### Restart with fresh sync
-
-docker-compose down
+```
+docker compose down
 docker volume rm ethereum-node-infra_geth-data
-docker-compose up -d
+docker compose up -d
 ```
 
-
-```
 ### Application logs
-
+```
 docker compose logs -f geth
 docker compose logs -f lighthouse
 ```
 
-
-```
 ### System logs
-
+```
 journalctl -u docker -f
 kubectl logs -f deployment/geth -n ethereum
 ```
