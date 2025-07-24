@@ -222,7 +222,7 @@ docker compose restart grafana
 
 Manual Scaling: 
 
-# Scale up to 2 replicas
+### Scale up to 2 replicas
 ```
 kubectl scale statefulset geth --replicas=2 -n ethereum
 ```
@@ -334,20 +334,20 @@ kubectl logs -f deployment/geth -n ethereum
 ### 📚 Additional Resources: 
 
 📁 Configuration Files
-
+```
 configs/prometheus/prometheus.yml: Metrics collection configuration
 configs/grafana/dashboards/: Pre-built monitoring dashboards
 configs/alertmanager/alertmanager.yml: Alert routing and notifications
 k8s/: Kubernetes manifests for production deployment
 terraform/gcp/: Infrastructure as Code for GCP
-
+```
 🔧 Scripts
-
+```
 scripts/deploy.sh: Automated deployment script
 scripts/health-check.sh: System health validation
 scripts/backup.sh: Comprehensive backup solution
 scripts/test-node.sh: Node functionality testing
-
+```
 📖 Documentation
 [Geth Documentation](https://geth.ethereum.org/docs/)
 [Lighthouse Book](https://lighthouse-book.sigmaprime.io/)
