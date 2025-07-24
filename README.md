@@ -22,7 +22,7 @@ A production-ready Ethereum node deployment solution with comprehensive monitori
 - Docker Engine 20.10+
 - Docker Compose 2.0+
 - 4+ CPU cores, 8GB+ RAM
-- 500GB+ SSD storage (testnet)
+- 250GB+ SSD storage (testnet)
 - Open ports: 8545, 8546, 30303, 8551
 
 ### 🏠 Local Deployment
@@ -99,13 +99,14 @@ gcloud container clusters get-credentials ethereum-cluster --region <region>
 2. Deploy Ethereum Kubernetes Manifest
 ./deploy-k8s.sh
 
-2. Verify deployment
+3. Verify deployment
 kubectl get pods -n ethereum
 kubectl get services -n ethereum
 
-```
+4. Run Ethereum Load Balancer Test Script
+ethereum-lb-test.sh
 
-5.  🧪 Test Ethereum 
+```
 
 
 ### 📊 Monitoring & Observability
