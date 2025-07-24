@@ -281,15 +281,15 @@ spec:
 ---
 ```
 
-## ⏱️ Recovery Time Objectives:
-
+### ⏱️ Recovery Time Objectives:
+```
 RTO (Recovery Time): <15 minutes
 RPO (Recovery Point): <6 hours
+```
+### 🔒 Security Implementation
+🌐 Network Security:
 
-## 🔒 Security Implementation
-🌐 Network Security
-
-### Firewall rules (GCP)
+Firewall rules (GCP)
 ```
 ingress_rules:
   - name: "allow-rpc-internal"
@@ -302,10 +302,10 @@ ingress_rules:
     protocol: "tcp/udp"
 ```
 
-## 🛠️ Troubleshooting Guide:
+### 🛠️ Troubleshooting Guide:
 
 
-# Check sync status
+### Check sync status
 ```
 curl -X POST -H "Content-Type: application/json" \
   --data '{"jsonrpc":"2.0","method":"eth_syncing","params":[],"id":1}' \
