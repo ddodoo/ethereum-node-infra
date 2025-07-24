@@ -228,8 +228,8 @@ kubectl scale statefulset geth --replicas=2 -n ethereum
 
 Vertical Pod Autoscaling
 # k8s/vpa.yml
+
 ```
----
 apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
 metadata:
@@ -253,7 +253,7 @@ spec:
         memory: 32Gi    # 32GB RAM max
       controlledResources: ["cpu", "memory"]
       controlledValues: RequestsAndLimits
----
+
 apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
 metadata:
@@ -277,7 +277,6 @@ spec:
         memory: 16Gi    # 16GB RAM max
       controlledResources: ["cpu", "memory"]
       controlledValues: RequestsAndLimits
----
 ```
 
 ### ⏱️ Recovery Time Objectives:
