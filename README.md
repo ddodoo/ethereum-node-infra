@@ -32,7 +32,7 @@ chmod +x scripts/deploy.sh
 
 ### Production Deployment (GCP)
 
-![GCP Ethereum Node Infrastructure](architecture_design_ ethereum_node.jpg)
+![GCP Ethereum Node Infrastructure](architecture_design_ethereum_node.jpg)
 
 
 1. Initialize Terraform:
