@@ -7,40 +7,15 @@ data:
   # Generate JWT secret: openssl rand -hex 32
   secret: "aced7325ad6f01b0f5a405ac1b04f9fbd768e9d382e953c5bb25487dd874f443"
 ---
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: geth-data-pvc
-  namespace: ethereum
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 100Gi
-  storageClassName: standard-rwo
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: lighthouse-data-pvc
-  namespace: ethereum
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 100Gi
-  storageClassName: standard-rwo
----
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: geth
   namespace: ethereum
   labels:
     app: geth
 spec:
+  serviceName: geth
   replicas: 1
   selector:
     matchLabels:
@@ -50,7 +25,6 @@ spec:
       labels:
         app: geth
     spec:
-      # Disable automatic service environment variable creation
       enableServiceLinks: false
       containers:
       - name: geth
@@ -120,21 +94,28 @@ spec:
             memory: "8Gi"
             cpu: "2000m"
       volumes:
-      - name: geth-data
-        persistentVolumeClaim:
-          claimName: geth-data-pvc
       - name: jwt-secret
         configMap:
           name: jwt-secret
+  volumeClaimTemplates:
+  - metadata:
+      name: geth-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: standard-rwo
+      resources:
+        requests:
+          storage: 100Gi
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: lighthouse
   namespace: ethereum
   labels:
     app: lighthouse
 spec:
+  serviceName: lighthouse
   replicas: 1
   selector:
     matchLabels:
@@ -144,7 +125,6 @@ spec:
       labels:
         app: lighthouse
     spec:
-      # Disable automatic service environment variable creation
       enableServiceLinks: false
       containers:
       - name: lighthouse
@@ -165,7 +145,7 @@ spec:
         args:
         - bn
         - --network=sepolia
-        - --execution-endpoint=http://geth:8551
+        - --execution-endpoint=http://geth-0.geth.ethereum.svc.cluster.local:8551
         - --execution-jwt=/root/jwt/secret
         - --checkpoint-sync-url=https://sepolia.beaconstate.info
         - --http
@@ -178,9 +158,64 @@ spec:
             memory: "4Gi"
             cpu: "1000m"
       volumes:
-      - name: lighthouse-data
-        persistentVolumeClaim:
-          claimName: lighthouse-data-pvc
       - name: jwt-secret
         configMap:
           name: jwt-secret
+  volumeClaimTemplates:
+  - metadata:
+      name: lighthouse-data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: standard-rwo
+      resources:
+        requests:
+          storage: 100Gi
+---
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: geth-vpa
+  namespace: ethereum
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: geth
+  updatePolicy:
+    updateMode: "Auto"  # Automatically restart pods with new resources
+  resourcePolicy:
+    containerPolicies:
+    - containerName: geth
+      minAllowed:
+        cpu: 500m
+        memory: 2Gi
+      maxAllowed:
+        cpu: 8000m      # 8 CPU cores max
+        memory: 32Gi    # 32GB RAM max
+      controlledResources: ["cpu", "memory"]
+      controlledValues: RequestsAndLimits
+---
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: lighthouse-vpa
+  namespace: ethereum
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: lighthouse
+  updatePolicy:
+    updateMode: "Auto"
+  resourcePolicy:
+    containerPolicies:
+    - containerName: lighthouse
+      minAllowed:
+        cpu: 250m
+        memory: 1Gi
+      maxAllowed:
+        cpu: 4000m      # 4 CPU cores max
+        memory: 16Gi    # 16GB RAM max
+      controlledResources: ["cpu", "memory"]
+      controlledValues: RequestsAndLimits
+---

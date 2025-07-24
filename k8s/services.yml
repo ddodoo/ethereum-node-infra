@@ -1,3 +1,4 @@
+# Headless service for StatefulSet 
 apiVersion: v1
 kind: Service
 metadata:
@@ -29,8 +30,31 @@ spec:
     port: 6060
     targetPort: 6060
     protocol: TCP
+  clusterIP: None  # Headless service for StatefulSet
+---
+# Regular service for external access and load balancing
+apiVersion: v1
+kind: Service
+metadata:
+  name: geth-rpc
+  namespace: ethereum
+  labels:
+    app: geth
+spec:
+  selector:
+    app: geth
+  ports:
+  - name: http-rpc
+    port: 8545
+    targetPort: 8545
+    protocol: TCP
+  - name: ws-rpc
+    port: 8546
+    targetPort: 8546
+    protocol: TCP
   type: ClusterIP
 ---
+# External LoadBalancer for Geth RPC access
 apiVersion: v1
 kind: Service
 metadata:
@@ -40,6 +64,9 @@ metadata:
     app: geth
   annotations:
     cloud.google.com/load-balancer-type: "External"
+    # Sticky sessions for consistent node access
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "tcp"
 spec:
   selector:
     app: geth
@@ -53,7 +80,12 @@ spec:
     targetPort: 8546
     protocol: TCP
   type: LoadBalancer
+  sessionAffinity: ClientIP  # Sticky sessions
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800  # 3 hours
 ---
+# Headless service for Lighthouse StatefulSet
 apiVersion: v1
 kind: Service
 metadata:
@@ -69,6 +101,24 @@ spec:
     port: 9000
     targetPort: 9000
     protocol: TCP
+  - name: http-api
+    port: 5052
+    targetPort: 5052
+    protocol: TCP
+  clusterIP: None  # Headless service for StatefulSet
+---
+# Regular service for Lighthouse API access
+apiVersion: v1
+kind: Service
+metadata:
+  name: lighthouse-api
+  namespace: ethereum
+  labels:
+    app: lighthouse
+spec:
+  selector:
+    app: lighthouse
+  ports:
   - name: http-api
     port: 5052
     targetPort: 5052
