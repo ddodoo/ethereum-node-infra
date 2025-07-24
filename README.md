@@ -199,7 +199,7 @@ Critical alerts configured in configs/prometheus/rules/ethereum.yml:
 # Add new dashboard
 cp configs/grafana/dashboards/template.json configs/grafana/dashboards/my-dashboard.json
 # Edit JSON configuration
-docker-compose restart grafana
+docker compose restart grafana
 ```
 
 
@@ -223,13 +223,15 @@ docker-compose restart grafana
 🔄 Auto-scaling Configuration:
 
 Manual Scaling: 
+```
 # Scale up to 2 replicas
 kubectl scale statefulset geth --replicas=2 -n ethereum
+```
 
 Vertical Pod Autoscaling
-# k8s/vpa.yml
 
 ```
+# vpa.yml
 ---
 apiVersion: autoscaling.k8s.io/v1
 kind: VerticalPodAutoscaler
@@ -282,16 +284,16 @@ spec:
 ```
 
 
-⏱️ Recovery Time Objectives:
+## ⏱️ Recovery Time Objectives:
 
 RTO (Recovery Time): <15 minutes
 RPO (Recovery Point): <6 hours
 
-🔒 Security Implementation
+## 🔒 Security Implementation
 🌐 Network Security
 
+### Firewall rules (GCP)
 ```
-# Firewall rules (GCP)
 ingress_rules:
   - name: "allow-rpc-internal"
     source_ranges: ["10.0.0.0/8"]
@@ -304,34 +306,44 @@ ingress_rules:
 ```
 
 
-🛠️ Troubleshooting Guide
+## 🛠️ Troubleshooting Guide:
+
 
 ```
-Node Sync Problems: 
 # Check sync status
+
 curl -X POST -H "Content-Type: application/json" \
   --data '{"jsonrpc":"2.0","method":"eth_syncing","params":[],"id":1}' \
   http://localhost:8545
-
-Memory Issues:
-# Restart with fresh sync
-docker-compose down
-docker volume rm ethereum-node-infra_geth-data
-docker-compose up -d
-
-Logs Analysis:
-# Application logs
-docker-compose logs -f geth
-docker-compose logs -f lighthouse
-
-# System logs
-journalctl -u docker -f
-kubectl logs -f deployment/geth -n ethereum
+```
 
 
 ```
+### Restart with fresh sync
 
-📚 Additional Resources
+docker-compose down
+docker volume rm ethereum-node-infra_geth-data
+docker-compose up -d
+```
+
+
+```
+### Application logs
+
+docker compose logs -f geth
+docker compose logs -f lighthouse
+```
+
+
+```
+### System logs
+
+journalctl -u docker -f
+kubectl logs -f deployment/geth -n ethereum
+```
+
+### 📚 Additional Resources: 
+
 📁 Configuration Files
 
 configs/prometheus/prometheus.yml: Metrics collection configuration
