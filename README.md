@@ -12,7 +12,7 @@
 1. Clone the repository:
 
 ```
-git clone https://github.com/your-repo/ethereum-node-infra.git
+git clone https://github.com/ddodoo/ethereum-node-infra.git
 cd ethereum-node-infra
 ```
 
@@ -32,7 +32,7 @@ chmod +x scripts/deploy.sh
 
 ### Production Deployment (GCP)
 
-![GCP Ethereum Node Infrastructure]("Architecture Design_ Ethereum Node Infrastructure and Reliability.jpg")
+![GCP Ethereum Node Infrastructure](architecture_design_ ethereum_node.jpg)
 
 
 1. Initialize Terraform:
