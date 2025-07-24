@@ -44,7 +44,3 @@ module "storage" {
 
 }
 
-# Load Balancer (still inline — optional to modularize)
-resource "google_compute_global_address" "ethereum_lb_ip" {
-  name = "ethereum-lb-ip"
-}

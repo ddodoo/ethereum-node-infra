@@ -18,7 +18,7 @@ spec:
   resources:
     requests:
       storage: 100Gi
-  storageClassName: standard
+  storageClassName: standard-rwo
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -31,7 +31,7 @@ spec:
   resources:
     requests:
       storage: 100Gi
-  storageClassName: standard
+  storageClassName: standard-rwo
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -50,6 +50,8 @@ spec:
       labels:
         app: geth
     spec:
+      # Disable automatic service environment variable creation
+      enableServiceLinks: false
       containers:
       - name: geth
         image: ethereum/client-go:latest
@@ -142,6 +144,8 @@ spec:
       labels:
         app: lighthouse
     spec:
+      # Disable automatic service environment variable creation
+      enableServiceLinks: false
       containers:
       - name: lighthouse
         image: sigp/lighthouse:latest

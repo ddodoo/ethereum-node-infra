@@ -28,7 +28,7 @@ resource "google_container_node_pool" "nodes" {
     preemptible  = false
     machine_type = var.machine_type
     disk_size_gb = var.disk_size_gb
-    disk_type    = "pd-ssd"
+    disk_type    = "pd-standard"
     oauth_scopes = [
       "https://www.googleapis.com/auth/logging.write",
       "https://www.googleapis.com/auth/monitoring",
